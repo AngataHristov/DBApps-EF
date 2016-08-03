@@ -1,0 +1,82 @@
+USE Company
+Go
+----------------------------------------
+SELECT 
+  e.FirstName+' '+e.LastName AS [FullName],
+  e.YearSalary
+FROM Employees e
+WHERE e.YearSalary >= 100000 AND e.YearSalary <= 150000
+ORDER BY e.YearSalary ASC
+-------------------------------------
+SELECT
+  d.Name AS [Department name],
+  COUNT(e.Id) AS [Number of employees]
+FROM Departments d
+INNER JOIN Employees e
+  ON e.DepartmentId=d.Id
+GROUP BY d.Name
+ORDER BY COUNT(e.Id) DESC
+--------------------------------------------
+SELECT
+  e.FirstName+' '+e.LastName AS [FullName],
+  p.Name AS [ProjectName],
+  d.Name AS [DepartmentName],
+  pe.StartDate AS [StartingDate],
+  pe.EndDate AS [EndingDate],
+  	(SELECT COUNT(*)
+  	 FROM Reports r
+  	 WHERE r.Time>=pe.StartDate AND r.Time<=pe.EndDate)
+FROM ProjectsEmployees pe
+INNER JOIN Employees e
+  ON pe.EmployeeId=e.Id
+INNER JOIN Projects p
+  ON p.Id=pe.ProjectId
+INNER JOIN Departments d
+  ON d.Id=e.DepartmentId
+ORDER BY pe.EmployeeId,pe.ProjectId
+
+USE Company
+GO
+
+CREATE PROC dbo.usp_CreateCacheTableForReports
+AS
+	CREATE TABLE ReportsCache
+	(
+		EmployeeName nvarchar(41),
+		DepartmentName nvarchar(50),
+		ProjectName nvarchar(50),
+		StartDate date,
+		EndDate date,
+		TotalReports int
+	)
+GO
+
+EXEC dbo.usp_CreateCacheTableForReports
+GO
+
+CREATE PROC dbo.usp_InsertCachedReports
+AS
+   DELETE FROM dbo.ReportsCache
+
+   INSERT INTO dbo.ReportsCache 
+   SELECT
+  e.FirstName+' '+e.LastName AS [FullName],
+  p.Name AS [ProjectName],
+  d.Name AS [DepartmentName],
+  pe.StartDate AS [StartingDate],
+  pe.EndDate AS [EndingDate],
+  	(SELECT COUNT(*)
+  	 FROM Reports r
+  	 WHERE r.Time>=pe.StartDate AND r.Time<=pe.EndDate)
+FROM ProjectsEmployees pe
+INNER JOIN Employees e
+  ON pe.EmployeeId=e.Id
+INNER JOIN Projects p
+  ON p.Id=pe.ProjectId
+INNER JOIN Departments d
+  ON d.Id=e.DepartmentId
+ORDER BY pe.EmployeeId,pe.ProjectId
+GO
+
+EXEC dbo.usp_InsertCachedReports
+GO
