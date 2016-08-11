@@ -1,0 +1,31 @@
+USE ToysStore
+GO
+
+SELECT
+  t.Name,
+  t.Price
+FROM Toys t
+WHERE t.Type='puzzle' AND t.Price>10
+ORDER BY t.Price
+
+SELECT
+  t.Name,
+  t.Price,
+  t.Color
+FROM Toys t
+INNER JOIN ToysCategories ct
+  ON ct.ToyId=t.Id
+INNER JOIN Categories c
+  ON c.Id=ct.CategoryId
+WHERE c.Name='boys'
+
+SELECT  
+ m.Name,
+ (SELECT
+  COUNT(*)
+  FROM Toys t
+  INNER JOIN AgeRanges a
+    ON a.Id=t.AgeRangeId
+  WHERE a.MinimumAge>=5 AND a.MaximumAge<=10
+  AND m.Id=t.ManufacturerId) AS [Count]
+FROM Manufacturers m
